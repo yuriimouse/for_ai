@@ -21,7 +21,7 @@ extern "C"
  *    0 = matches not found
  *    1 = expression matches
  **/
-int regexp_match(char *expr, char *subj)
+int regexp_match(char *expr, const char *subj)
 {
     regex_t regex;
     int reti = 0;

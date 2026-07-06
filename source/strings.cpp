@@ -140,13 +140,12 @@ string string_get(const char *src, size_t count)
             if (mem)
             {
                 strncpy(mem, src, count);
+                mem[count] = '\0';
             }
             return mem;
         }
         else
-        {
             return strdup(src);
-        }
     }
     return NULL;
 }
@@ -216,14 +215,12 @@ bool string_found(const char *str, const char *word, const char *delim)
     int ret = 0;
     if (str && word && delim)
     {
-        string dup = strdup(str);
+        string dup = string_dup(str);
         string_forEach(dup, delim, token)
         {
             ret = string_equals(word, token);
             if (ret)
-            {
                 break;
-            }
         }
         FREE_AND_NULL(dup);
     }
@@ -347,7 +344,11 @@ string string_join(const char *delim, const char *piece, ...)
  */
 string string_unfold(const char *src)
 {
+    if (string_empty(src))
+        return nullptr;
     string out = (char *)malloc(strlen(src) + 1);
+    if (!out)
+        return nullptr;
     char *iwrite = out;
 
     bool is_spaced = false;
@@ -477,6 +478,8 @@ string string_modify(const char *str, const char *find, const char *replace)
             return strdup(str);
         }
 
+        if (replace_len > find_len && count > (SIZE_MAX / (replace_len - find_len)))
+            return NULL; // overflow (AI)
         // Allocate memory for the new string
         size_t new_len = str_len + (replace_len - find_len) * count;
         char *new_str = (char *)malloc(new_len + 1);
@@ -591,16 +594,6 @@ string string_vprintf(const char *format, va_list valist)
         vasprintf(&buff, format, valist);
     }
     return buff;
-}
-
-static thread_local char buff[1024] = "";
-const char *string_make(const char *format, ...)
-{
-    va_list valist;
-    va_start(valist, format);
-    int cnt = vsnprintf(buff, 1023, format, valist);
-    va_end(valist);
-    return cnt > 0 ? buff : nullptr;
 }
 
 /**
